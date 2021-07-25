@@ -521,3 +521,16 @@ class InferTypesTransformer(ast.NodeTransformer):
                     node.annotation.lifetime = definition.annotation.lifetime
         self.generic_visit(node)
         return node
+
+    def visit_For(self, node):
+        self.visit(node.target)
+        self.visit(node.iter)
+        if (
+            isinstance(node.target, (ast.Name, ast.Attribute))
+            and hasattr(node.iter, "annotation")
+            and isinstance(node.iter.annotation, ast.Subscript)
+            and isinstance(node.iter.annotation.slice, ast.Name)
+        ):
+            node.target.annotation = node.iter.annotation.slice
+        self.generic_visit(node)
+        return node
