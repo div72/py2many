@@ -5,6 +5,7 @@ from typing import Dict, List, Optional, Set, Tuple, Union
 from py2many.tracer import is_list, defined_before
 from py2many.exceptions import AstNotImplementedError
 from py2many.analysis import get_id, is_mutable, is_void_function
+from py2many.ast_helpers import create_ast_node
 
 from .clike import CLikeTranspiler
 from .inference import V_WIDTH_RANK
@@ -25,15 +26,14 @@ def is_mutable(scopes, target: str) -> bool:
     return _is_mutable(scopes, target)
 
 
-def new_expr(source: str, node: ast.AST) -> ast.AST:
-    """Generates ast nodes using source and fills location info using the old node."""
-    new_node = ast.parse(source).body[0]
-    if isinstance(new_node, ast.Expr):
-        new_node = new_node.value
-    new_node.lineno = node.lineno
-    new_node.col_offset = node.col_offset
-    ast.fix_missing_locations(new_node)
-    return new_node
+_create_ast_node = create_ast_node
+
+
+def create_ast_node(code, at_node=None) -> ast.AST:
+    res = _create_ast_node(code, at_node=at_node)
+    if isinstance(res, ast.Expr):
+        res = res.value
+    return res
 
 
 def is_dict(node: ast.AST) -> bool:
@@ -60,7 +60,7 @@ class VDictRewriter(ast.NodeTransformer):
         if (
             isinstance(node.func, ast.Attribute) and node.func.attr == "values"
         ):  # and is_dict(node.func.value):
-            new_node: ast.Call = new_expr("a.keys().map(a[it])", node)
+            new_node: ast.Call = create_ast_node("a.keys().map(a[it])", at_node=node)
             new_node.func.value.func.value = node.func.value
             new_node.args[0].value = node.func.value
             return new_node
@@ -74,7 +74,7 @@ class VComprehensionRewriter(ast.NodeTransformer):
 
     def visit_Name(self, node: ast.Name) -> Union[ast.Name, ast.Subscript]:
         if node.id in self.redirects:
-            return new_expr(self.redirects[node.id], node)
+            return create_ast_node(self.redirects[node.id], at_node=node)
         return node
 
     def visit_GeneratorExp(self, node: ast.GeneratorExp) -> ast.Call:
@@ -94,12 +94,12 @@ class VComprehensionRewriter(ast.NodeTransformer):
             subnode = comp.iter
 
             for cmp in comp.ifs:
-                chain = new_expr("placeholder.filter(placeholder)", node)
+                chain = create_ast_node("placeholder.filter(placeholder)", at_node=node)
                 chain.func.value = subnode
                 chain.args[0] = cmp
                 subnode = chain
 
-            chain = new_expr("placeholder.map(placeholder)", node)
+            chain = create_ast_node("placeholder.map(placeholder)", at_node=node)
             chain.func.value = subnode
             chain.args[0] = node.elt
             subnode = chain
