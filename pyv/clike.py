@@ -124,6 +124,8 @@ class CLikeTranspiler(CommonCLikeTranspiler):
             right = f"{left_type}({right})"
         elif right_rank > left_rank:
             left = f"{right_type}({left})"
+        if op in ['&', '|', '^']:
+            print(left_type, right_type)
         if "bool" in (left_type, right_type):
             op = {"&": "&&", "|": "||", "^": "!="}.get(op, op)
         return f"({left} {op} {right})"
