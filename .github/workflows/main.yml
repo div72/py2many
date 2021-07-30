@@ -32,7 +32,7 @@ jobs:
       - name: Install V
         shell: bash
         env:
-          RELEASE: weekly.2021.29
+          RELEASE: weekly.2021.30
         run: |
           FILE=v_$(echo ${RUNNER_OS} | tr '[:upper:]' '[:lower:]').zip
           (cd /tmp && curl -sSLO https://github.com/vlang/v/releases/download/${RELEASE}/${FILE})
