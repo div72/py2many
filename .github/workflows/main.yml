@@ -24,9 +24,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - uses: subosito/flutter-action@v1
+      - uses: subosito/flutter-action@v2
         with:
-          channel: 'stable'
+          flutter-version: '2.8'
       - uses: julia-actions/setup-julia@v1
       - uses: fwilhe2/setup-kotlin@main
       - uses: jiro4989/setup-nim-action@v1
@@ -99,7 +99,7 @@ jobs:
           dart --version
           # tests/build here must be the same as defined in test_cli
           (dart create --no-pub -t package-simple tests/build && cd tests/build \
-           && dart pub add collection \
+           && dart pub add collection:1.15.0 \
            && dart pub add sprintf \
            && dart pub add tuple \
            && sed -i.bak '/test:/d' pubspec.yaml \
