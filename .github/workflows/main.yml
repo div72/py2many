@@ -44,7 +44,7 @@ jobs:
         run: |
           FILE=v_$(echo ${RUNNER_OS} | tr '[:upper:]' '[:lower:]').zip
           (cd /tmp && curl -sSLO https://github.com/vlang/v/releases/download/${RELEASE}/${FILE})
-          (cd /tmp && unzip ${FILE})
+          (cd /tmp && unzip ${FILE}) || echo "Unzipping failed?"
           if [ "$RUNNER_OS" != "Windows" ]; then
             (cd /usr/local/bin && sudo ln -s /tmp/v/v)
           fi
